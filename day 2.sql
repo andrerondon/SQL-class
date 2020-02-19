@@ -174,3 +174,58 @@ SELECT sale_price, SUM(remaining_quantity) AS product_count
 FROM products
 GROUP BY sale_price
 ORDER BY 2 DESC
+
+[stretch] Update the most expensive product (use 'price') to have double its quantity in a single query
+Jugraj
+select * from products order by price desc limit 1
+
+update products set remaining_quantity = remaining_quantity * 2
+where id = (select id from products order by price desc limit 1)
+
+
+12.	Find the number of students named 'Elinore'.
+
+select *
+From students
+WHERE first_name = 'Elinore'
+
+13.	List the `first_name`s that occur more than once in students, with the number occurrences of that name.
+
+SELECT first_name, COUNT(*) AS NumofOcc
+FROM STUDENTS
+GROUP BY first_name
+HAVING COUNT(*) > 1
+
+14.	Refine the above query to list the 20 most common first_names among students, in order first of how common they are, and alphabetically when names have the same count.
+
+SELECT first_name, COUNT(*) AS NumofOcc
+FROM STUDENTS
+GROUP BY first_name
+HAVING COUNT(*) > 1
+order by 2 desc, first_name
+limit 20
+
+
+
+From the products table:
+15.	Find the most expensive product.
+
+select *
+from products
+order by sale_price DEsc
+limit 1
+
+16. Find the cheapest product that is on sale.
+
+SELECT *
+FROM products
+WHERE sale_price = price
+ORDER BY sale_price
+LIMIT 1
+
+
+17. Find the total value of all inventory in stock (use sale price).
+
+
+SELECT SUM(remaining_quantity * sale_price) AS total_value
+FROM products
