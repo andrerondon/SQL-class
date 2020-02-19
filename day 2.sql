@@ -229,3 +229,13 @@ LIMIT 1
 
 SELECT SUM(remaining_quantity * sale_price) AS total_value
 FROM products
+
+
+
+String Functions - https://www.postgresql.org/docs/9.6/functions-string.html
+--Heroku email fixer
+
+UPDATE students
+SET email = first_name || '.' || last_name || '@gmail.com'
+WHERE email ILIKE '%Jugraj%'
+
