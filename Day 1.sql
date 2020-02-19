@@ -141,7 +141,7 @@ ORDER BY registration_date
 LIMIT 1
 
 Assignment: [Lab] Products CRUD
-Using the data from this morning's lesson, write the following SQL Queries:
+Using the data from this mornings lesson, write the following SQL Queries:
 •	Create a product record with the following attributes:
   o	name: Premium Rustic Aluminum Gloves [your name]
   o	description: Extra amazing gloves
@@ -173,7 +173,7 @@ WHERE id = 289
 4.	Delete that record using its id
 
 Assignment: [Lab] Selecting
-Using data from this morning's lesson, write the following SQL Queries:
+Using data from this mornings lesson, write the following SQL Queries:
 From the students table:
 1.	Select the first 10 students whose ages are between 35 and 45.
 2.	Select the second set of 10 students whose ages are more than 25 and whose first names contain `le`. The students must be ordered by their id in ascending order then first name in a descending order.
@@ -239,7 +239,7 @@ Build a query that groups the products by their sale price and show the number o
 [stretch] Update the most expensive product to have double its quantity in a single query
 
 Assignment: [Lab] Aggregate Functions
-Using the data from this morning's lesson, write the following SQL Queries:
+Using the data from this mornings lesson, write the following SQL Queries:
 From the students table:
 •	Find the number of students named 'Elinore'.
 •	List the `first_name`s that occur more than once in students, with the number occurrences of that name.
