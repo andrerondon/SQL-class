@@ -92,23 +92,231 @@ INNER JOIN products p ON p.id = li.product_id
 GROUP BY product_id, p.name
 
 6.2 The client wants to know how many of each product it has bought.  Find the total number of items sold for each product and the remaining stock.
+
+SELECT product_id,  p.name, --SUM(quantity) as total_sold, p.remaining_quantity,
+SUM(quantity) + p.remaining_quantity AS total_inventory
+FROM line_items li
+INNER JOIN products p ON p.id = li.product_id
+GROUP BY product_id, p.name, remaining_quantity
+
+
+
 6.3 Find the total value of each product sold.  (6.1 but summing up the values)
+
+SELECT product_id,
+SUM(li.quantity * li.price) as sum_total_sold,
+p.name
+FROM line_items li
+INNER JOIN products p ON p.id = li.product_id
+GROUP BY product_id, p.name
+
+
 6.4 Find the average price for each product sold.
 
-7. Find the minimum, maximum, and average order total or orders in March 2008
-8. Select all the products that have been purchased in the last 24 months.
-9. Select the top 10 products in terms of 2007s gross sales.
+
+SELECT AVG(li.price), li.product_id
+FROM line_items li
+GROUP BY product_id;
+
+SELECT * from line_items where product_id = 4
+
+SELECT( 32.15 + (34.15 * 5) + 38.15) / 7
+
+SELECT --SUM(price * quantity) AS tot_value,
+ROUND((SUM(price * quantity) / SUM (quantity))::numeric, 2) AS avg_price, product_id
+FROM line_items
+GROUP BY product_id
+--WHERE product_id = 4
+7a. Find which year/month has the highest number of orders.
+select TO_CHAR(o.completed_on,'Mon') as mon,
+	EXTRACT(year FROM o.completed_on) AS yyyy,
+    count(*) AS noOforders
+FROM line_items li
+INNER JOIN orders o ON o.id = li.order_id
+GROUP BY 1,2
+ORDER BY noOforders DESC
+LIMIT 1
+
+/*
+SELECT DATE_PART('year', completed_on), DATE_PART('month', completed_on), COUNT(*)
+FROM orders o
+GROUP BY DATE_PART('year', completed_on), DATE_PART('month', completed_on)
+ORDER BY 3 DESC
+LIMIT 1
+*/
+
+SELECT DATE_PART('year', completed_on), DATE_PART('month', completed_on), COUNT(*)
+FROM orders o
+GROUP BY 1,2
+LIMIT 1
+
+7b. Find which year/months have the highest and lowest value of orders.
+ - Lowest - January 2007 = 20.58
+ SELECT DATE_PART('year', completed_on), DATE_PART('month', completed_on),
+SUM(li.price * li.quantity) AS total_monthly_sales
+FROM orders o
+INNER JOIN line_items li ON li.order_id = o.id
+GROUP BY 1,2
+ORDER BY 3
+LIMIT 1
+
+ - Highest - Dec 2007 - 3322.48
+ SELECT DATE_PART('year', completed_on), DATE_PART('month', completed_on),
+SUM(li.price * li.quantity) AS total_monthly_sales
+FROM orders o
+INNER JOIN line_items li ON li.order_id = o.id
+GROUP BY 1,2
+ORDER BY 3 DESC
+LIMIT 1
+
+7c. Find the minimum, maximum, and average order total for orders in January 2006 in a single query.
+
+SELECT MAX(order_total) AS max_order_total, MIN(order_total) AS min_order_total, AVG(order_total) AS avg_order_total
+FROM
+(
+	SELECT SUM(li.price * li.quantity) AS order_total , o.id
+	FROM orders o
+	INNER JOIN line_items li ON li.order_id = o.id
+	WHERE DATE_PART('year', completed_on) = 2006 AND DATE_PART('month', completed_on) = 1
+	GROUP BY o.id
+) x
+
+7d. Find which month has the highest number of orders.
+7e. Find which year has the lowest value of sales.
+
+8a.  Find all the orders from 2007.
+SELECT completed_on
+FROM orders
+--WHERE completed_on > '2007-01-01' AND completed_on < '2008-01-01'
+--WHERE completed_on BETWEEN '2007-01-01' AND  '2008-01-01'
+WHERE DATE_PART('year', completed_on) = 2007
+
+8b.  Include all the line_items for those orders.
+SELECT *
+FROM orders o
+LEFT JOIN line_items li ON li.order_id = o.id
+WHERE completed_on > '2007-01-01' AND completed_on < '2008-01-01'
+
+8c.  Find the top 10 products in terms of 2007s gross sales.  Show the product name and its gross sales.
+--8c.  Find the top 10 products in terms of 2007's gross sales.
+--Show the product name and its' gross sales.
+
+SELECT o.id, SUM(li.price * li.quantity) AS order_total
+FROM orders o
+LEFT JOIN line_items li ON li.order_id = o.id
+WHERE completed_on > '2007-01-01' AND completed_on < '2008-01-01'
+GROUP BY o.id
+ORDER BY order_total DESC
+LIMIT 10
+
 10. Select all the products that werent purchased in March.
-11. Select the average order total price for all the `Leather Gloves` products.
-12. CREATE TABLE users (  id  SERIAL PRIMARY KEY,  email VARCHAR(128) NOT NULL);
-    CREATE TABLE groups (  id  SERIAL PRIMARY KEY,  group_name VARCHAR(128) NOT NULL);
-    CREATE TABLE user_group_memberships (  id  SERIAL PRIMARY KEY,  user_id INTEGER NOT NULL,  group_id INTEGER NOT NULL);
-    Please write a query to determine, given a particular users email address, what group ids and groups names do they belong to (associate with)?
+
+--first get all orders that in March.
+SELECT *
+FROM orders o
+WHERE DATE_PART('month', completed_on) = 3
+
+--second get all the product ids that are in those orders
+SELECT DISTINCT li.product_id
+FROM orders o
+INNER JOIN line_items li ON li.order_id = o.id
+WHERE DATE_PART('month', completed_on) = 3
+
+--finally select all the products that do NOT have ids found in orders
+SELECT COUNT(*)
+FROM products
+WHERE id NOT IN
+(
+	SELECT DISTINCT li.product_id
+	FROM orders o
+	INNER JOIN line_items li ON li.order_id = o.id
+	WHERE DATE_PART('month', completed_on) = 3
+)
+
+
+11. Select the average order total price for all orders containing some type of `Leather Gloves` product.
+a) one way to do this
+SELECT *
+FROM line_items li
+WHERE li.product_id IN
+(
+	SELECT id
+	FROM products p
+	WHERE p.name ILIKE '%Leather Gloves%'
+)
+
+b) Second way, using a join to filter the products
+SELECT *
+FROM line_items li
+INNER JOIN products p ON p.id = li.product_id AND p.name ILIKE '%Leather Gloves%'
+
+c) second step, grab all the order ids that have a line_item that has a product of type Leather gloves
+SELECT order_id
+FROM line_items li
+WHERE li.product_id IN
+(
+  SELECT id
+  FROM products p
+  WHERE p.name ILIKE '%Leather Gloves%'
+)
+
+d)  Select all line_items for all orders that have a line_item that has a product of type leather gloves.
+--
+SELECT li.order_id, li.product_id, p.name, li.price, li.quantity
+FROM line_items li
+INNER JOIN products p ON p.id = li.product_id
+WHERE order_id IN
+(
+	SELECT order_id
+	FROM line_items li
+	WHERE li.product_id IN
+	(
+		SELECT id
+		FROM products p
+		WHERE p.name ILIKE '%Leather Gloves%'
+	)
+)
+ORDER BY order_id, product_id
+
+e)  Now find the average total order price for each orders
+
+-- find all line_items containing one of those types of gloves
+SELECT SUM(li.price * li.quantity) as order_total, order_id   --li.order_id, li.product_id, p.name, li.price, li.quantity
+FROM line_items li
+INNER JOIN products p ON p.id = li.product_id
+WHERE order_id IN
+(
+	SELECT order_id
+	FROM line_items li
+	WHERE li.product_id IN
+	(
+		SELECT id
+		FROM products p
+		WHERE p.name ILIKE '%Leather Gloves%'
+	)
+)
+GROUP BY order_id
+ORDER BY order_id
+
 13. We need to find out the sales by day of the week so we can see which days people are buying stuff.  So list all days of the week (Mon-Sun) and their total sales.
 14. We need the same as 13, but the average total sale.  We want to know if bigger orders are being placed on certain days or not.
 
 Stretches
 =========
-S1. Find the average order total price for all the orders in the system with only one query. (without nested query)
-S2. Find the number of orders for each month and display that count along with the month/year that the number of orders is for.  Sort it by most orders.  Sort it again but chronologically.
-S3. Find all the descriptors and materials used in all 'gloves' products.  ie.  Durable Steel Gloves has 'steel' as the material and 'durable' as the descriptor.
+S1. Find all the descriptors and materials used in all 'gloves' products.  ie.  Durable Steel Gloves has 'steel' as the material and 'durable' as the descriptor.
+S2. Find the average order total price for all the orders in the system with only one query. (without nested query)
+S3. Find the number of orders for each month and display that count along with the month/year that the number of orders is for.  Sort it by most orders.  Sort it again but chronologically.
+
+SELECT DATE_PART('year', completed_on), DATE_PART('month', completed_on),
+COUNT(o.*) AS NumOfOrders
+FROM orders o
+INNER JOIN line_items li ON li.order_id = o.id
+GROUP BY 1,2
+ORDER BY 3 DESC
+
+
+
+12. CREATE TABLE users (  id  SERIAL PRIMARY KEY,  email VARCHAR(128) NOT NULL);
+CREATE TABLE groups (  id  SERIAL PRIMARY KEY,  group_name VARCHAR(128) NOT NULL);
+CREATE TABLE user_group_memberships (  id  SERIAL PRIMARY KEY,  user_id INTEGER NOT NULL,  group_id INTEGER NOT NULL);
+Please write a query to determine, given a particular users email address, what group ids and groups names do they belong to (associate with)?
