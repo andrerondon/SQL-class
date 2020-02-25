@@ -17,7 +17,8 @@ COPY ice_cream_survey
 FROM 'C:\YourDirectory\ice_cream_survey.csv'
 WITH (FORMAT CSV, HEADER);
 
---Generating the ice cream survey crosstab
+-- Generating the ice cream survey crosstab
+-- Use DAy 4 question S3 as base to show crosstab
 
 SELECT *
 FROM crosstab('SELECT office,
@@ -49,12 +50,26 @@ CREATE OR REPLACE VIEW students_under_21 AS
   FROM students
 WHERE age < 21;
 
+--create a total column in the line items table to save us calculating it
+CREATE OR REPLACE VIEW line_items_total AS
+  SELECT id, product_id, order_id, price, quantity, price * quantity as line_total
+  FROM line_items
+;
+
 You can update or insert data in the underlying table that a view queries
 as long as the view meets certain conditions.
 One requirement is that the view must reference a single table.
 If the view’s query joins tables, then you can’t perform inserts or updates directly.
 Also, the view’s query can’t contain DISTINCT, GROUP BY, or other clauses.
-(See a complete list of restrictions at https://www.postgresql.org/docs/current/static/sql-createview.html.)
+(See a complete list of restrictions at
+
+EXERCISE 1 :  Create a view to show which products have 5 or less remaining_quantity.
+ Call your view, products_to_reorder
+
+DEMO : Create a view that adds the order total along with the order information.  (completed_on)
+
+
+
 
 --FUNCTIONS
 --Functions allow you to declare a simple or complex set of steps to be
@@ -71,3 +86,42 @@ RETURNS NULL ON NULL INPUT;
 
 SELECT full_name(first_name, last_name), *
 FROM students
+
+CREATE OR REPLACE FUNCTION percent_change(new_value numeric, old_value numeric,
+decimal_places integer DEFAULT 1) RETURNS numeric AS
+'SELECT round(
+((new_value - old_value) / old_value) * 100, decimal_places
+);'
+LANGUAGE SQL
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+TRIGGERS - Just be aware they are there for your use.
+
+CREATE OR REPLACE FUNCTION log_student_created_on()
+  RETURNS trigger AS
+$BODY$
+BEGIN
+   UPDATE students SET created_on = NOW() WHERE id = NEW.id
+/*
+   IF NEW.last_name <> OLD.last_name THEN
+       INSERT INTO employee_audits(employee_id,last_name,changed_on)
+       VALUES(OLD.id,OLD.last_name,now());
+   END IF;
+*/
+   RETURN NEW;
+END;
+$BODY$
+
+
+--Other functions/logic available to users
+
+--CASE
+
+
+Exercise - Create a view that has all product columns plus AveragePriceSoldFor
+
+AveragePriceSoldFor = li.price average weighted by quantity .
+
+1. create the view, add the new column which returns 10.
+2. work on the logic to return the actual value.
