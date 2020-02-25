@@ -299,6 +299,21 @@ GROUP BY order_id
 ORDER BY order_id
 
 13. We need to find out the sales by day of the week so we can see which days people are buying stuff.  So list all days of the week (Mon-Sun) and their total sales.
+
+-- by day of week
+SELECT DATE_PART('dow', completed_on) || '-' ||to_char(completed_on, 'Day'), sum(li.price * li.quantity)
+FROM orders o
+INNER JOIN line_items li ON li.order_id = o.id
+GROUP BY 1
+ORDER BY 1
+
+-- by highest total sales desc
+SELECT DATE_PART('dow', completed_on) || '-' ||to_char(completed_on, 'Day'), sum(li.price * li.quantity)
+FROM orders o
+INNER JOIN line_items li ON li.order_id = o.id
+GROUP BY 1
+ORDER BY 2 DESC
+
 14. We need the same as 13, but the average total sale.  We want to know if bigger orders are being placed on certain days or not.
 
 Stretches
@@ -313,10 +328,3 @@ FROM orders o
 INNER JOIN line_items li ON li.order_id = o.id
 GROUP BY 1,2
 ORDER BY 3 DESC
-
-
-
-12. CREATE TABLE users (  id  SERIAL PRIMARY KEY,  email VARCHAR(128) NOT NULL);
-CREATE TABLE groups (  id  SERIAL PRIMARY KEY,  group_name VARCHAR(128) NOT NULL);
-CREATE TABLE user_group_memberships (  id  SERIAL PRIMARY KEY,  user_id INTEGER NOT NULL,  group_id INTEGER NOT NULL);
-Please write a query to determine, given a particular users email address, what group ids and groups names do they belong to (associate with)?
