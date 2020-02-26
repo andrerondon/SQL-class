@@ -117,7 +117,15 @@ $BODY$
 --Other functions/logic available to users
 
 --CASE
-
+SELECT
+	CASE
+		WHEN age < 21 THEN 'Minor'
+		WHEN age BETWEEN 21 and 35 THEN 'Adult'
+		WHEN age > 65 THEN 'Grandpa'
+		ELSE 'getting up there'
+	END AS Demographic
+, *
+FROM students
 
 Exercise - Create a view that has all product columns plus AveragePriceSoldFor
 
@@ -125,3 +133,56 @@ AveragePriceSoldFor = li.price average weighted by quantity .
 
 1. create the view, add the new column which returns 10.
 2. work on the logic to return the actual value.
+
+youll want to use something similiar to below in your logic.
+ROUND((SUM(price * quantity) / SUM (quantity))::numeric, 2)
+
+CREATE OR REPLACE view products_with_avg_price_sold_for
+AS
+
+	SELECT p.id, name, p.price, sale_price, remaining_quantity,
+	ROUND((SUM(li.price * li.quantity) / SUM (li.quantity))::numeric, 2) AS AveragePriceSoldFor
+	FROM products p
+	INNER JOIN line_items li ON li.product_id = p.id
+	GROUP BY p.id, name, p.price, sale_price, remaining_quantity
+
+NOTE:  Postgres does allow you to put Order BY in the view. M$SQL does not.
+
+SELECT * from products_with_avg_price_sold_for
+WHERE sale_price > averagepricesoldfor
+
+Exercise - Create a query that has all the student columns plus FizzBuzz
+The value of FizzBuzz should be as follows:
+1.  If the age is a multiple of 3, it should be Fizz
+2.  If the age is a multiple of 5, it should be Buzz
+3.  If the age is a multiple of 3 and 5, it should be FizzBuzz
+4.  Otherwise, just put in the age.
+
+SELECT
+	CASE
+		WHEN MOD(age,15) = 0 THEN 'FizzBuzz'
+		WHEN MOD(age, 3) = 0 THEN 'Fizz'
+		WHEN MOD(age, 5) = 0 THEN 'Buzz'
+		ELSE age::varchar(3)
+	END AS FizzBuzz
+, *
+FROM students
+
+Part 2 - Create a view called StudentsFizzBuzz with the query from Part 1 using the GUI
+
+Part 3 - Export all rows from StudentsFizzBuzz to a csv file.  Use the following code snippet to
+assist you.
+
+COPY (SELECT
+	CASE
+		WHEN MOD(age,15) = 0 THEN 'FizzBuzz'
+		WHEN MOD(age, 3) = 0 THEN 'Fizz'
+		WHEN MOD(age, 5) = 0 THEN 'Buzz'
+		ELSE age::varchar(3)
+	END AS FizzBuzz
+, *
+FROM students)
+TO '/Users/Greg/codecore/Teaching/WADD201911/fizzbuzz.csv'
+WITH CSV HEADER;
+
+Lecture:  Vaccuum
